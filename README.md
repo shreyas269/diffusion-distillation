@@ -12,29 +12,55 @@ Recent advancements in large-scale text-to-image models have revolutionized imag
 
 ## Installation
 
-To get started, clone the repository and install the required dependencies:
+### Prerequisites
+
+Before running the script, make sure you install the Huggingface Diffusers library from source:
 
 ```bash
-git clone https://github.com/yourusername/yourproject.git
-cd yourproject
+git clone https://github.com/huggingface/diffusers
+cd diffusers
+pip install .
+```
+
+Navigate to the example folder with the training script and install the required dependencies:
+
+```bash
+cd examples/custom_diffusion
 pip install -r requirements.txt
+pip install clip-retrieval
 ```
 
-Ensure you have the Huggingface Diffusers library and Accelerate library installed:
+This is the starter code to train the custom diffusion model:
 
 ```bash
-pip install diffusers accelerate
+export MODEL_NAME="CompVis/stable-diffusion-v1-4"
+export OUTPUT_DIR="path-to-save-model"
+export INSTANCE_DIR="./data/cat"
+
+accelerate launch train_custom_diffusion.py \
+  --pretrained_model_name_or_path=$MODEL_NAME  \
+  --instance_data_dir=$INSTANCE_DIR \
+  --output_dir=$OUTPUT_DIR \
+  --class_data_dir=./real_reg/samples_cat/ \
+  --with_prior_preservation \
+  --real_prior \
+  --prior_loss_weight=1.0 \
+  --class_prompt="cat" \
+  --num_class_images=200 \
+  --instance_prompt="photo of a <new1> cat"  \
+  --resolution=512  \
+  --train_batch_size=2  \
+  --learning_rate=1e-5  \
+  --lr_warmup_steps=0 \
+  --max_train_steps=250 \
+  --scale_lr \
+  --hflip  \
+  --modifier_token "<new1>" \
+  --validation_prompt="<new1> cat sitting in a bucket" \
+  --report_to="wandb" \
+  --push_to_hub
 ```
 
-## Usage
-
-### Download Data
-
-First, download the data required for training using `data.py`:
-
-```bash
-python data.py
-```
 
 ### Distillation Training
 
@@ -59,7 +85,7 @@ accelerate launch --mixed_precision="fp16" distill_training.py \
   --learning_rate=1e-05 \
   --max_grad_norm=1 \
   --lr_scheduler="constant" --lr_warmup_steps=0 \
-  --output_dir=<"Paste your output dir name">
+  --output_dir="<Enter your dir name>"
 ```
 
 ### Training Settings
@@ -70,22 +96,6 @@ accelerate launch --mixed_precision="fp16" distill_training.py \
 - Output Weight: `0.5`
 - Feature Weight: `0.5`
 
-## Contributing
-
-We welcome contributions to enhance the project. Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature-branch`
-3. Make your changes and commit them: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature-branch`
-5. Submit a pull request.
-
-
-
-## Acknowledgments
-
-- The starter basic training code was sourced from the Huggingface Diffusers library.
-- Various techniques were referenced from [Kumari et al., 2023] and [Shi et al., 2023] for enhancing the language-vision dictionary of these models.
 
 ## References
 
